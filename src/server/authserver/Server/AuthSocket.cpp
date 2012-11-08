@@ -863,7 +863,7 @@ bool AuthSocket::_HandleRealmList()
         pkt << i->second.icon;
         if (_expversion & (POST_BC_EXP_FLAG | POST_WOTLK_EXP_FLAG))
             pkt << lock;
-        pkt << i->second.color;
+        pkt << i->second.flag;
         pkt << i->first;
         pkt << i->second.address;
         pkt << i->second.populationLevel;

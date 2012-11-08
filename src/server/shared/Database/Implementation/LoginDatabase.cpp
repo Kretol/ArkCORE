@@ -28,7 +28,7 @@ void LoginDatabaseConnection::DoPrepareStatements() {
 
     PREPARE_STATEMENT(
             LOGIN_GET_REALMLIST,
-            "SELECT id, name, address, port, icon, color, timezone, allowedSecurityLevel, population, gamebuild FROM realmlist WHERE color <> 3 ORDER BY name",
+            "SELECT id, name, address, port, icon, flag, timezone, allowedSecurityLevel, population, gamebuild FROM realmlist WHERE flag <> 3 ORDER BY name",
             CONNECTION_SYNCH);
     PREPARE_STATEMENT(
             LOGIN_SET_EXPIREDIPBANS,
