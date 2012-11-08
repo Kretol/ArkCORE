@@ -1127,10 +1127,19 @@ void Aura::HandleAuraSpecificMods (AuraApplication const* aurApp, Unit* caster, 
                 break;
             case 48020:          // Demonic Circle
                 if (target->GetTypeId() == TYPEID_PLAYER)
-                    if (GameObject* obj = target->GetGameObject(48018))
+                    if (GameObject* obj = caster->GetGameObject(48018))
                     {
-                        target->NearTeleportTo(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), obj->GetOrientation());
-                        target->RemoveMovementImpairingAuras();
+                        if (caster->IsWithinDist(obj, GetSpellMaxRange(GetSpellProto(), true)))
+                        {
+                            caster->NearTeleportTo(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), obj->GetOrientation());
+                            caster->RemoveMovementImpairingAuras();
+                        }
+                        if (caster->HasAura(74434))
+                        {
+                            caster->RemoveMovementImpairingAuras();
+                            caster->CastSpell(caster,79438,true);
+                            caster->CastSpell(caster,79438,true);
+                        }
                     }
                 break;
             }
@@ -1459,7 +1468,7 @@ void Aura::HandleAuraSpecificMods (AuraApplication const* aurApp, Unit* caster, 
                 // Do not remove GO when aura is removed by stack
                 // to prevent remove GO added by new spell
                 // old one is already removed
-                if (!onReapply)
+                if (target->HasAura(48018))
                     target->RemoveGameObject(GetId(), true);
                 target->RemoveAura(48018);
                 break;
@@ -1637,9 +1646,28 @@ void Aura::HandleAuraSpecificMods (AuraApplication const* aurApp, Unit* caster, 
         }
         break;
     case SPELLFAMILY_DRUID:
+        // Tiger's Fury
+        if (GetSpellProto()->SpellFamilyFlags[2] & 0x800)
+        {
+            //King of the Jungle
+            if (apply)
+                if (AuraEffect const * aurEff = target->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_DRUID, 2850, 1))
+                {
+                    int32 basepoints0 = aurEff->GetAmount();
+                    target->CastCustomSpell(target, 51178, &basepoints0, NULL, NULL, true, NULL, NULL, target->GetGUID());
+                }
+         }
         // Enrage
         if (GetSpellProto()->SpellFamilyFlags[0] & 0x80000)
         {
+            //King of the Jungle
+            if (apply)
+                if (AuraEffect const * aurEff = target->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_DRUID, 2850, 0))
+                {
+                    int32 basepoints0 = aurEff->GetAmount();
+                    target->CastCustomSpell(target, 51185, &basepoints0, NULL, NULL, true, NULL, NULL, target->GetGUID());
+                }
+
             if (target->HasAura(70726))          // Druid T10 Feral 4P Bonus
             {
                 if (apply)

@@ -3302,7 +3302,8 @@ void Spell::cancel ()
         m_caster->ToPlayer()->RemoveGlobalCooldown(m_spellInfo);
 
     m_caster->RemoveDynObject(m_spellInfo->Id);
-    m_caster->RemoveGameObject(m_spellInfo->Id, true);
+    if (IsChanneledSpell(m_spellInfo)) // if not channeled then the object for the current cast wasn't summoned yet
+        m_caster->RemoveGameObject(m_spellInfo->Id, true);
 
     //set state back so finish will be processed
     m_spellState = oldState;
@@ -3325,6 +3326,13 @@ void Spell::cast (bool skipCheck)
             finish(false);
             return;
         }
+		if ((m_spellInfo->Mechanic == MECHANIC_NONE && m_spellInfo->SpellIconID == 104 || m_spellInfo->Mechanic == MECHANIC_BANDAGE) && target->HasAura(11196)) // Recently Bandaged
+		{
+			SendCastResult(SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW);
+			SendInterrupted(0);
+			finish(false);
+			return;
+		}
     }
     else
     {
@@ -3436,8 +3444,11 @@ void Spell::cast (bool skipCheck)
     {
     case SPELLFAMILY_GENERIC:
     {
-        if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)          // Bandages
+        if (m_spellInfo->Mechanic == MECHANIC_NONE && m_spellInfo->SpellIconID == 104)   // Bandages << rank 12
             m_preCastSpell = 11196;          // Recently Bandaged
+		
+		if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)          // Bandages >> rank 12
+			m_preCastSpell = 11196;          // Recently Bandaged
         break;
     }
     case SPELLFAMILY_MAGE:
@@ -5665,7 +5676,7 @@ SpellCastResult Spell::CheckCast (bool strict)
 
             if (m_spellInfo->Id != 1842 || (m_targets.getGOTarget() && m_targets.getGOTarget()->GetGOInfo()->type != GAMEOBJECT_TYPE_TRAP))
                 if (m_caster->ToPlayer()->InBattleground() &&          // In Battleground players can use only flags and banners
-                !m_caster->ToPlayer()->CanUseBattlegroundObject())
+                !m_caster->ToPlayer()->CanUseBattlegroundObject(m_targets.getGOTarget()))
                     return SPELL_FAILED_TRY_AGAIN;
 
             // get the lock entry

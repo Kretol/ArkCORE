@@ -3866,6 +3866,10 @@ void SpellMgr::LoadSpellCustomAttr ()
 
         switch (i)
         {
+            // CATACLYSM SPELLS CHANGES	
+        case 48020:          // Demonic Circle
+            spellInfo->casterAuraSpell = 0;
+            break;
         case 53592:          // Touched by The Light
             spellInfo->EffectMiscValue[2] = 2;
             count++;
@@ -3944,6 +3948,60 @@ void SpellMgr::LoadSpellCustomAttr ()
             spellInfo->Effect[1] = 0;
             count++;
             break;
+			case 77612: //Modulation
+			case 92451:
+			case 92452:
+			case 92453:
+				spellInfo->EffectRadiusIndex[0] = 28;
+				spellInfo->EffectRadiusIndex[1] = 28;
+				spellInfo->EffectRadiusIndex[2] = 28;
+				count++;
+				break;
+		   
+		    case 86170: //Furious Roar
+			case 83710:
+			case 86169:
+			case 86171:
+				spellInfo->EffectRadiusIndex[0] = 28;
+				spellInfo->EffectRadiusIndex[1] = 28;
+				spellInfo->EffectRadiusIndex[2] = 28;
+				count++;
+			break;
+		   
+			case 86840:
+				spellInfo->EffectRadiusIndex[0] = 28;
+				spellInfo->EffectRadiusIndex[1] = 28;
+				spellInfo->EffectRadiusIndex[2] = 28;
+				count++;
+			break;
+			
+			case 76355:
+			case 89879:
+				spellInfo->EffectRadiusIndex[0] = 9;
+				spellInfo->EffectRadiusIndex[1] = 9;
+				spellInfo->EffectRadiusIndex[2] = 9;
+				count++;
+			break;
+			
+			case 79505:
+			case 91531:
+			case 91532:
+			case 91533:
+				spellInfo->EffectRadiusIndex[0] = 28;
+				spellInfo->EffectRadiusIndex[1] = 28;
+				spellInfo->EffectRadiusIndex[2] = 28;
+				count++;
+			break;
+			
+			case 79023:
+			case 91519:
+			case 91520:
+			case 91521:
+				spellInfo->EffectRadiusIndex[0] = 28;
+				spellInfo->EffectRadiusIndex[1] = 28;
+				spellInfo->EffectRadiusIndex[2] = 28;
+				count++;
+			break;			
         case 1680:          // Whirlwind  (Fury)
             spellInfo->EffectRadiusIndex[0] = 14;
             spellInfo->EffectRadiusIndex[1] = 14;
@@ -3976,10 +4034,15 @@ void SpellMgr::LoadSpellCustomAttr ()
             spellInfo->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
             count++;
             break;
+        case 82898:          // Crouching Tiger, Hidden Chimera (Rank 1)
+        case 82899:          // Crouching Tiger, Hidden Chimera (Rank 2)
+            spellInfo->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+            count++;
+            break;
         case 87934:          // Serpent Spread
         case 87935:
             spellInfo->Effect[0] = SPELL_EFFECT_APPLY_AURA;
-            spellInfo->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+            spellInfo->EffectApplyAuraName[0] = SPELL_AURA_DUMMY;
             count++;
             break;
         case 88691:          // Marked for Death Tracking

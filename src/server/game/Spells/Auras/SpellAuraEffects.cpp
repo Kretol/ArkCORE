@@ -821,6 +821,12 @@ int32 AuraEffect::CalculateAmount (Unit *caster)
         // Vampiric Blood
         if (GetId() == 55233)
             amount = GetBase()->GetUnitOwner()->CountPctFromMaxHealth(amount);
+         // Last Stand Warrior
+        if (GetId() == 12976)
+            amount = GetBase()->GetUnitOwner()->CountPctFromMaxHealth(30);
+        // Last Stand Hunter
+        if (GetId() == 53478)
+            amount = GetBase()->GetUnitOwner()->CountPctFromMaxHealth(30);
         break;
     case SPELL_AURA_MOD_INCREASE_ENERGY:
         // Hymn of Hope
@@ -1506,7 +1512,14 @@ void AuraEffect::PeriodicTick (AuraApplication * aurApp, Unit * caster) const
                 damage = damageReductedArmor;
             }
 
-            // Curse of Agony damage-per-tick calculation
+            //Shadow Word Death/Mind Blast Shadow Orb Proc 10% chance in 406a
+			if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_PRIEST && (GetSpellProto()->SpellIconID == 95 || GetSpellProto()->SpellIconID == 1980)) // Mind Blast / Shadow Word Death
+			{
+				int32 orbchance = 10;
+				if (roll_chance_i(orbchance))
+					caster->CastSpell(caster, 95740, true);
+			}
+			// Curse of Agony damage-per-tick calculation
             if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_WARLOCK && (GetSpellProto()->SpellFamilyFlags[0] & 0x400) && GetSpellProto()->SpellIconID == 544)
             {
                 uint32 totalTick = GetTotalTicks();
@@ -2195,11 +2208,11 @@ void AuraEffect::PeriodicDummyTick (Unit *target, Unit *caster) const
             {
                 if (target->IsWithinDist(obj, GetSpellMaxRange(48020, true)))
                 {
-                    if (!target->HasAura(48018))
-                        target->CastSpell(target, 48018, true);
+                     if (!target->HasAura(62388))
+                        target->SendAuraVisualForSelf(true,62388, 1);
                 }
                 else
-                    target->RemoveAura(48018);
+                    target->SendAuraVisualForSelf(false,62388);
             }
             break;
         }
@@ -2805,7 +2818,8 @@ void AuraEffect::HandleShapeshiftBoosts (Unit *target, bool apply) const
         HotWSpellId = 24900;
         break;
     case FORM_TREE:
-        spellId = 34123;
+        spellId = 52553;
+        spellId2 = 5420;
         break;
     case FORM_TRAVEL:
         spellId = 5419;
@@ -6912,29 +6926,17 @@ void AuraEffect::HandleAuraDummy (AuraApplication const *aurApp, uint8 mode, boo
         break;
     }
     case SPELLFAMILY_MAGE:
-    {
-        if (!(mode & AURA_EFFECT_HANDLE_REAL))
-            break;
-        switch (GetId())
         {
-        //Arcane Missiles.
-        case 79683:
-        {
-            if (apply)
-                caster->CastSpell(caster, 79808, true, NULL, NULL, GetCasterGUID());
+            //if (!(mode & AURA_EFFECT_HANDLE_REAL))
+                //break;
             break;
         }
-        case 5143:
-        {
-            caster->RemoveAurasDueToSpell(79808);
-            break;
-        }
-            break;
-        }
-        break;
-    }
     case SPELLFAMILY_PRIEST:
-        break;
+        {
+            // if (!(mode & AURA_EFFECT_HANDLE_REAL))
+                // break;
+            break;
+        }
     case SPELLFAMILY_DRUID:
     {
         if (!(mode & AURA_EFFECT_HANDLE_CHANGE_AMOUNT_MASK))
