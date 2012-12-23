@@ -630,6 +630,8 @@ bool ChatHandler::HandlePInfoCommand (const char* args)
     uint8 Class;
     int64 muteTime = 0;
     int64 banTime = -1;
+    uint32 mapId;
+    uint32 areaId;
 	uint32 phase = 0;
 
     // get additional information from Player object
@@ -647,6 +649,8 @@ bool ChatHandler::HandlePInfoCommand (const char* args)
         race = target->getRace();
         Class = target->getClass();
         muteTime = target->GetSession()->m_muteTime;
+        mapId = target->GetMapId();
+        areaId = target->GetAreaId();
         phase = target->GetPhaseMask();
     }
     // get additional information from DB
@@ -657,7 +661,7 @@ bool ChatHandler::HandlePInfoCommand (const char* args)
             return false;
 
         //                                                     0          1      2      3        4     5
-        QueryResult result = CharacterDatabase.PQuery("SELECT totaltime, level, money, account, race, class FROM characters WHERE guid = '%u'", GUID_LOPART(target_guid));
+        QueryResult result = CharacterDatabase.PQuery("SELECT totaltime, level, money, account, race, class, map, zone FROM characters WHERE guid = '%u'", GUID_LOPART(target_guid));
         if (!result)
             return false;
 
@@ -668,6 +672,8 @@ bool ChatHandler::HandlePInfoCommand (const char* args)
         accId = fields[3].GetUInt32();
         race = fields[4].GetUInt8();
         Class = fields[5].GetUInt8();
+        mapId = fields[6].GetUInt16();
+        areaId = fields[7].GetUInt16();
     }
 
     std::string username = GetArkCoreString(LANG_ERROR);
@@ -802,8 +808,34 @@ bool ChatHandler::HandlePInfoCommand (const char* args)
     uint32 silv = (money % GOLD) / SILVER;
     uint32 copp = (money % GOLD) % SILVER;
     PSendSysMessage(LANG_PINFO_LEVEL, race_s.c_str(), Class_s.c_str(), timeStr.c_str(), level, gold, silv, copp);
+    //if (target)
+    //    PSendSysMessage(LANG_PINFO_PHASE, phase);
+
+    // Add map, zone, subzone and phase to output
+    std::string areaName = "<unknown>";
+    std::string zoneName = "";
+
+    MapEntry const* map = sMapStore.LookupEntry(mapId);
+
+    AreaTableEntry const* area = GetAreaEntryByAreaID(areaId);
+    if (area)
+    {
+        areaName = area->area_name;
+
+        AreaTableEntry const* zone = GetAreaEntryByAreaID(area->zone);
+        if (zone)
+            zoneName = zone->area_name;
+    }
+
     if (target)
-        PSendSysMessage(LANG_PINFO_PHASE, phase);
+    {
+        if (!zoneName.empty())
+            PSendSysMessage(LANG_PINFO_MAP_ONLINE, map->name, zoneName.c_str(), areaName.c_str(), phase);
+        else
+            PSendSysMessage(LANG_PINFO_MAP_ONLINE, map->name, areaName.c_str(), "<unknown>", phase);
+    }
+    else
+        PSendSysMessage(LANG_PINFO_MAP_OFFLINE, map->name, areaName.c_str());
 
     return true;
 }

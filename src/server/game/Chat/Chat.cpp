@@ -508,7 +508,7 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "maxskill", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleMaxSkillCommand>, "", NULL },
     { "setskill", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleSetSkillCommand>, "", NULL },
     { "whispers", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleWhispersCommand>, "", NULL },
-    { "pinfo", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandlePInfoCommand>, "", NULL },
+    { "playerinfo", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandlePInfoCommand>, "", NULL },
     { "respawn", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleRespawnCommand>, "", NULL },
     { "send", SEC_MODERATOR, true, NULL, "", sendCommandTable },
     { "mute", SEC_MODERATOR, true, OldHandler<&ChatHandler::HandleMuteCommand>, "", NULL },
