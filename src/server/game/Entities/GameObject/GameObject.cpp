@@ -45,6 +45,7 @@
 #include "ScriptMgr.h"
 #include "CreatureAISelector.h"
 #include "Group.h"
+#include "Chat.h"
 
 GameObject::GameObject () :
         WorldObject(), m_goValue(new GameObjectValue), m_AI(NULL)
@@ -185,7 +186,7 @@ void GameObject::RemoveFromWorld ()
     }
 }
 
-bool GameObject::Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit)
+bool GameObject::Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit, float scale)
 {
     ASSERT(map);
     SetMap(map);
@@ -229,7 +230,10 @@ bool GameObject::Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseM
 
     UpdateRotationFields(rotation2, rotation3);          // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
-    SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
+    if (scale > 0)
+        SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+    else
+        SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
     SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
@@ -693,10 +697,14 @@ void GameObject::SaveToDB ()
         return;
     }
 
-    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask);
+    float scale = GetFloatValue(OBJECT_FIELD_SCALE_X);
+    if (scale == m_goInfo->size)
+        scale = 0.0f;
+
+    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask, scale);
 }
 
-void GameObject::SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask)
+void GameObject::SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask, float scale)
 {
     const GameObjectInfo *goI = GetGOInfo();
 
@@ -736,6 +744,17 @@ void GameObject::SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     trans->PAppend("DELETE FROM gameobject WHERE guid = '%u'", m_DBTableGuid);
     trans->Append(ss.str().c_str());
     WorldDatabase.CommitTransaction(trans);
+
+    if (scale > 0)
+    {
+        QueryResult result = WorldDatabase.PQuery("SELECT guid FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
+        if (result)
+            WorldDatabase.PExecute("UPDATE gameobject_addon SET scale = '%f' WHERE guid = '%u'", scale, m_DBTableGuid);
+        else
+            WorldDatabase.PExecute("INSERT INTO gameobject_addon(guid,scale) VALUES ('%u','%f')", m_DBTableGuid, scale);
+    }
+    else
+        WorldDatabase.PExecute("DELETE FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
 }
 
 bool GameObject::LoadFromDB (uint32 guid, Map *map)
@@ -764,12 +783,13 @@ bool GameObject::LoadFromDB (uint32 guid, Map *map)
     uint32 animprogress = data->animprogress;
     GOState go_state = data->go_state;
     uint32 artKit = data->artKit;
+    float scale = data->scale;
 
     m_DBTableGuid = guid;
     if (map->GetInstanceId() != 0)
         guid = sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT);
 
-    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit))
+    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit, scale))
         return false;
 
     if (data->spawntimesecs >= 0)
@@ -813,6 +833,7 @@ void GameObject::DeleteFromDB ()
     sObjectMgr->DeleteGOData(m_DBTableGuid);
     WorldDatabase.PExecute("DELETE FROM gameobject WHERE guid = '%u'", m_DBTableGuid);
     WorldDatabase.PExecute("DELETE FROM game_event_gameobject WHERE guid = '%u'", m_DBTableGuid);
+    WorldDatabase.PExecute("DELETE FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
 }
 
 GameObject* GameObject::GetGameObject (WorldObject& object, uint64 guid)
@@ -864,6 +885,15 @@ bool GameObject::IsDynTransport () const
     return gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT || (gInfo->type == GAMEOBJECT_TYPE_TRANSPORT && !gInfo->transport.pause);
 }
 
+bool GameObject::IsStaticMO() const
+{
+    // If something is marked as a map object, don't transmit an out of range packet for it.
+    GameObjectInfo const * gInfo = GetGOInfo();
+    if (!gInfo)
+        return false;
+    return gInfo->type == GAMEOBJECT_TYPE_MAP_OBJECT;
+}
+
 Unit* GameObject::GetOwner () const
 {
     return ObjectAccessor::GetUnit(*this, GetOwnerGUID());
@@ -881,6 +911,9 @@ bool GameObject::isAlwaysVisibleFor (WorldObject const* seer) const
         return true;
 
     if (IsTransport())
+        return true;
+
+    if (IsStaticMO())
         return true;
 
     return false;
@@ -1614,6 +1647,38 @@ void GameObject::Use (Unit* user)
         }
         break;
     }
+
+    case GAMEOBJECT_TYPE_MINI_GAME:                      //27
+    {
+        if (user->GetTypeId() != TYPEID_PLAYER)
+            return;
+                
+        GameObjectInfo const* info = GetGOInfo();
+        if (!info)
+            return;
+
+        Player* player = user->ToPlayer();
+            
+        if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
+            {
+                AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
+                if (!at)
+                {
+                    sLog->outErrorDb("AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                    return;
+                }
+
+                player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+                if (info->miniGame.phase != 0)
+                    player->SetPhaseMask(info->miniGame.phase,true);
+            }
+            else if (info->miniGame.requiredLevel != 0)
+            {
+                ChatHandler(player).PSendSysMessage(LANG_MINIGAME_LOW_LEVEL,info->miniGame.requiredLevel);
+            }
+        return;
+    }
+
     case GAMEOBJECT_TYPE_BARBER_CHAIR:          //32
     {
         GameObjectInfo const* info = GetGOInfo();

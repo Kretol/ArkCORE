@@ -63,6 +63,8 @@ public:
         { "turn", SEC_GAMEMASTER, false, &HandleGameObjectTurnCommand, "", NULL },
         { "add", SEC_GAMEMASTER, false, NULL, "", gobjectAddCommandTable },
         { "set", SEC_GAMEMASTER, false, NULL, "", gobjectSetCommandTable },
+        // Custom
+        { "scale", SEC_GAMEMASTER, false, &HandleGameObjectScaleCommand, "", NULL },
         { NULL, 0, false, NULL, "", NULL } };
         static ChatCommand commandTable[] =
         {
@@ -280,9 +282,7 @@ public:
             }
 
             bool found = false;
-            float x, y
-, z       ,
-        o;
+            float x, y, z, o, scale;
         uint32 lowguid, id;
         uint16 mapid, phase;
         uint32 pool_id;
@@ -319,8 +319,16 @@ public:
         }
 
         GameObject* target = handler->GetSession()->GetPlayer()->GetMap()->GetGameObject(MAKE_NEW_GUID(lowguid, id, HIGHGUID_GAMEOBJECT));
+        if (target)
+            scale = target->GetFloatValue(OBJECT_FIELD_SCALE_X);
+        
+        if (!scale)
+        {
+            handler->PSendSysMessage(LANG_GOINFO_SCALE_ERROR);
+            return false;
+        }
 
-        handler->PSendSysMessage(LANG_GAMEOBJECT_DETAIL, lowguid, goI->name, lowguid, id, x, y, z, mapid, o, phase);
+        handler->PSendSysMessage(LANG_GAMEOBJECT_DETAIL, lowguid, goI->name, lowguid, id, x, y, z, mapid, o, phase, scale);
 
         if (target)
         {
@@ -671,6 +679,51 @@ public:
             gobj->SendMessageToSet(&data, true);
         }
         handler->PSendSysMessage("Set gobject type %d state %d", type, state);
+        return true;
+    }
+
+    
+    //set scale for selected object spawn
+    static bool HandleGameObjectScaleCommand(ChatHandler* handler, char const* args)
+    {
+        // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
+        char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
+        if (!id)
+            return false;
+
+        uint32 guidLow = atoi(id);
+        if (!guidLow)
+            return false;
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGOData(guidLow))
+            object = handler->GetObjectGlobalyWithGuidOrNearWithDbGuid(guidLow, gameObjectData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* scale = strtok (NULL, " ");
+        float scaleDB = scale ? atof(scale) : 0;
+        if (scaleDB == 0)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        object->SetFloatValue(OBJECT_FIELD_SCALE_X, scaleDB);
+        object->DestroyForNearbyPlayers();
+        object->UpdateObjectVisibility();
+        object->SaveToDB();
+        object->Refresh();
+        
+        handler->PSendSysMessage("Set gobject GUID %u to scale %f", guidLow, scaleDB);
         return true;
     }
 };

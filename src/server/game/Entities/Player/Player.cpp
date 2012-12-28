@@ -3246,8 +3246,8 @@ void Player::SetGMVisible (bool on)
     {
         m_ExtraFlags |= PLAYER_EXTRA_GM_INVISIBLE;          //add flag
 
-        SetAcceptWhispers(false);
-        SetGameMaster(true);
+        //SetAcceptWhispers(false);
+        //SetGameMaster(true);
 
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GM, GetSession()->GetSecurity());
     }
@@ -3566,7 +3566,14 @@ void Player::InitStatsForLevel (bool reapplyMods)
     SetFloatValue(PLAYER_FIELD_MOD_RANGED_HASTE, 1.0f); // Ranged	
 
     // reset size before reapply auras
-    SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+    QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
+    {
+        float scale = (*result)[0].GetFloat();
+        SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+    }
+    else
+        SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
 
     // save base values (bonuses already included in stored stats
     for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -5351,6 +5358,7 @@ void Player::DeleteFromDB (uint64 playerguid, uint32 accountId, bool updateRealm
         trans->PAppend("DELETE FROM character_queststatus_daily WHERE guid = '%u'", guid);
         trans->PAppend("DELETE FROM character_talent WHERE guid = '%u'", guid);
         trans->PAppend("DELETE FROM character_skills WHERE guid = '%u'", guid);
+        trans->PAppend("DELETE FROM characters_addon WHERE guid = '%u'", guid);
 
         CharacterDatabase.CommitTransaction(trans);
         break;
@@ -5973,6 +5981,10 @@ void Player::RepopAtGraveyard ()
 
 bool Player::CanJoinConstantChannelInZone (ChatChannelsEntry const* channel, AreaTableEntry const* zone)
 {
+    // Player can join LFG anywhere
+    if (channel->flags & CHANNEL_DBC_FLAG_LFG)
+        return true;
+
     if (channel->flags & CHANNEL_DBC_FLAG_ZONE_DEP)
     {
         if (zone->flags & AREA_FLAG_ARENA_INSTANCE)
@@ -17653,7 +17665,17 @@ bool Player::_LoadFromDB(uint32 guid, SQLQueryHolder * holder, PreparedQueryResu
 
     //Need to call it to initialize m_team (m_team can be calculated from race)
     //Other way is to saves m_team into characters table.
-    setFactionForRace(getRace());
+    //setFactionForRace(getRace());
+    QueryResult resultFaction = CharacterDatabase.PQuery("SELECT faction FROM characters_addon WHERE faction>0 AND guid='%u'", guid);
+    if(resultFaction)
+    {
+        uint32 cfaction = (*resultFaction)[0].GetUInt32();
+        setFaction(cfaction);
+    }
+    else
+    {
+        setFactionForRace(getRace());
+    }
 
     // load home bind and check in same time class/race pair, it used later for restore broken positions
     if (!_LoadHomeBind(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADHOMEBIND)))
@@ -20536,9 +20558,19 @@ void Player::Whisper (const std::string& text, uint32 language, uint64 receiver)
             GetSession()->SendPacket(&data);
         }
     }
-    else
+    else if (language != LANG_ADDON)
+    {
+        WorldPacket data(SMSG_MESSAGECHAT, 200);
+        BuildPlayerChat(&data, CHAT_MSG_WHISPER, _text, language);
+        rPlayer->GetSession()->SendPacket(&data);
         // announce to player that player he is whispering to is dnd and cannot receive his message
+        //ChatHandler(this).PSendSysMessage(LANG_PLAYER_DND, rPlayer->GetName(), rPlayer->dndMsg.c_str());
+
         ChatHandler(this).PSendSysMessage(LANG_PLAYER_DND, rPlayer->GetName(), rPlayer->dndMsg.c_str());
+        data.Initialize(SMSG_MESSAGECHAT, 200);
+        rPlayer->BuildPlayerChat(&data, CHAT_MSG_WHISPER_INFORM, _text, language);
+        GetSession()->SendPacket(&data);
+    }
 
     if (!isAcceptWhispers() && !isGameMaster() && !rPlayer->isGameMaster())
     {
@@ -20547,12 +20579,12 @@ void Player::Whisper (const std::string& text, uint32 language, uint64 receiver)
     }
 
     // announce to player that player he is whispering to is afk
-    if (rPlayer->isAFK())
+    if (rPlayer->isAFK() && language != LANG_ADDON)
         ChatHandler(this).PSendSysMessage(LANG_PLAYER_AFK, rPlayer->GetName(), rPlayer->afkMsg.c_str());
 
     // if player whisper someone, auto turn of dnd to be able to receive an answer
-    if (isDND() && !rPlayer->isGameMaster())
-        ToggleDND();
+    //if (isDND() && !rPlayer->isGameMaster())
+    //    ToggleDND();
 }
 
 void Player::PetSpellInitialize ()
@@ -21419,20 +21451,30 @@ void Player::InitDisplayIds ()
         return;
     }
 
-    uint8 gender = getGender();
-    switch (gender)
+    QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE display>'0' AND guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
     {
-    case GENDER_FEMALE:
-        SetDisplayId(info->displayId_f);
-        SetNativeDisplayId(info->displayId_f);
-        break;
-    case GENDER_MALE:
-        SetDisplayId(info->displayId_m);
-        SetNativeDisplayId(info->displayId_m);
-        break;
-    default:
-        sLog->outError("Invalid gender %u for player", gender);
-        return;
+        uint32 display = (*result)[0].GetUInt32();
+        SetDisplayId(display);
+        SetNativeDisplayId(display);
+    }
+    else
+    {
+        uint8 gender = getGender();
+        switch (gender)
+        {
+            case GENDER_FEMALE:
+                SetDisplayId(info->displayId_f);
+                SetNativeDisplayId(info->displayId_f);
+                break;
+            case GENDER_MALE:
+                SetDisplayId(info->displayId_m);
+                SetNativeDisplayId(info->displayId_m);
+                break;
+            default:
+                sLog->outError("Invalid gender %u for player",gender);
+                return;
+        }
     }
 }
 

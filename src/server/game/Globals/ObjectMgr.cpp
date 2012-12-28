@@ -992,6 +992,15 @@ void ObjectMgr::LoadCreatureAddons(SQLStorage& creatureaddons, char const* entry
         if (!sEmotesStore.LookupEntry(addon->emote))
             sLog->outErrorDb("Creature (%s %u) have invalid emote (%u) defined in `%s`.", entryName, addon->guidOrEntry, addon->emote, creatureaddons.GetTableName());
 
+        if (addon->faction)
+        {
+            if (!sCreatureDisplayInfoStore.LookupEntry(addon->faction))
+            {
+                sLog->outErrorDb("Creature (%s %u) have invalid faction (%u) defined in `%s`.", entryName, addon->guidOrEntry, addon->faction, creatureaddons.GetTableName());
+                const_cast<CreatureDataAddon*>(addon)->mount = 0;
+            }
+        }
+
         /*if (addon->move_flags & (MONSTER_MOVE_UNK1|MONSTER_MOVE_UNK4))
         {
             sLog->outErrorDb("Creature (%s %u) movement flags mask defined in `%s` include forbidden  flags (" I32FMT ") that can crash client, cleanup at load.", entryName, addon->guidOrEntry, creatureaddons.GetTableName(), (MONSTER_MOVE_UNK1|MONSTER_MOVE_UNK4));
@@ -1785,10 +1794,11 @@ void ObjectMgr::LoadGameobjects()
 
     //                                                0                1   2    3           4           5           6
     QueryResult result = WorldDatabase.Query("SELECT gameobject.guid, id, map, position_x, position_y, position_z, orientation, "
-    //   7          8          9          10         11             12            13     14         15         16     17
-        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event, pool_entry "
+    //   7          8          9          10         11             12            13     14         15         16     17          18
+        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, event, pool_entry, scale "
         "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
-        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid");
+        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid "
+        "LEFT OUTER JOIN gameobject_addon ON gameobject.guid = gameobject_addon.guid");
 
     if (!result)
     {
@@ -5855,7 +5865,7 @@ void ObjectMgr::LoadQuestAreaTriggers()
         if (!atEntry)
         {
             sLog->outErrorDb("Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", trigger_ID);
-            continue;
+            //continue;
         }
 
         Quest const* quest = GetQuestTemplate(quest_ID);
@@ -6060,7 +6070,8 @@ void ObjectMgr::GetTaxiPath(uint32 source, uint32 destination, uint32 &path, uin
         return;
     }
 
-    cost = dest_i->second.price;
+    //cost = dest_i->second.price;
+    cost = 0;
     path = dest_i->second.ID;
 }
 
@@ -6398,7 +6409,7 @@ void ObjectMgr::LoadAreaTriggerTeleports()
         if (!atEntry)
         {
             sLog->outErrorDb("Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", Trigger_ID);
-            continue;
+            //continue;
         }
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(at.target_mapId);

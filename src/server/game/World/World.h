@@ -160,7 +160,9 @@ enum WorldBoolConfigs
 
 enum WorldFloatConfigs
 {
-    CONFIG_GROUP_XP_DISTANCE = 0, CONFIG_MAX_RECRUIT_A_FRIEND_DISTANCE, CONFIG_SIGHT_MONSTER, CONFIG_SIGHT_GUARDER, CONFIG_LISTEN_RANGE_SAY, CONFIG_LISTEN_RANGE_TEXTEMOTE, CONFIG_LISTEN_RANGE_YELL, CONFIG_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS, CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS, CONFIG_THREAT_RADIUS, CONFIG_CHANCE_OF_GM_SURVEY, FLOAT_CONFIG_VALUE_COUNT
+    CONFIG_GROUP_XP_DISTANCE = 0, CONFIG_MAX_RECRUIT_A_FRIEND_DISTANCE, CONFIG_SIGHT_MONSTER, CONFIG_SIGHT_GUARDER, CONFIG_LISTEN_RANGE_SAY, CONFIG_LISTEN_RANGE_TEXTEMOTE, CONFIG_LISTEN_RANGE_YELL, CONFIG_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS, CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS, CONFIG_THREAT_RADIUS, CONFIG_CHANCE_OF_GM_SURVEY, FLOAT_CONFIG_VALUE_COUNT,
+    // Custom
+    CONFIG_MAX_AGRO_RANGE
 };
 
 enum WorldIntConfigs
@@ -855,6 +857,13 @@ public:
         m_CleaningFlags = flags;
     }
     std::string AntiCheatWarnChannel;
+
+    //Custom
+    void CastAll(uint32 spell, bool triggered);
+    void AddItemAll(uint32 itemId, int32 count);
+    void MassUnaura(uint32 spellId);
+    void MassUnauraAll();
+    void MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone, float orient, uint32 phase);
 protected:
     void _UpdateGameTime ();
     // callback for UpdateRealmCharacters

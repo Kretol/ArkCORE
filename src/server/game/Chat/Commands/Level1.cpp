@@ -379,7 +379,9 @@ bool ChatHandler::HandleGMVisibleCommand (const char* args)
         return true;
     }
 
+    const uint32 VISUAL_AURA = 37800;
     std::string argstr = (char*) args;
+    Player* player = GetSession()->GetPlayer();
 
     if (argstr == "change")
     {
@@ -391,7 +393,10 @@ bool ChatHandler::HandleGMVisibleCommand (const char* args)
 
     if (argstr == "on")
     {
-        m_session->GetPlayer()->SetGMVisible(true);
+        if (player->HasAura(VISUAL_AURA, 0))
+            player->RemoveAurasDueToSpell(VISUAL_AURA);
+
+        player->SetGMVisible(true);
         m_session->SendNotification(LANG_INVISIBLE_VISIBLE);
         return true;
     }
@@ -399,7 +404,8 @@ bool ChatHandler::HandleGMVisibleCommand (const char* args)
     if (argstr == "off")
     {
         m_session->SendNotification(LANG_INVISIBLE_INVISIBLE);
-        m_session->GetPlayer()->SetGMVisible(false);
+        player->SetGMVisible(false);
+        player->AddAura(VISUAL_AURA, player);
         return true;
     }
 
@@ -2640,6 +2646,103 @@ bool ChatHandler::HandleModifyDrunkCommand (const char* args)
     uint16 drunkMod = drunklevel * 0xFFFF / 100;
 
     m_session->GetPlayer()->SetDrunkValue(drunkMod);
+
+    return true;
+}
+
+// Custom
+bool ChatHandler::HandleServerEmoteCommand(const char* args)
+{
+    if (!*args)
+        return false;
+
+    char buff[2048];
+    sprintf(buff, GetArkCoreString(LANG_WORLD_EMOTE), args);
+    sWorld->SendServerMessage(SERVER_MSG_STRING, buff);
+    return true;
+}
+
+bool ChatHandler::HandleLookupRPItemCommand(const char* args)
+{
+    if (!*args)
+        return false;
+
+    std::string namepart = args;
+    std::wstring wNamePart;
+
+    // converting string that we try to find to lower case
+    if (!Utf8toWStr(namepart,wNamePart))
+        return false;
+
+    wstrToLower(wNamePart);
+
+    bool found = false;
+	uint32 count = 0;
+    uint32 maxResults = sWorld->getIntConfig(CONFIG_MAX_RESULTS_LOOKUP_COMMANDS);
+
+    // Search in `item_template`
+    ItemTemplateContainer const* its = sObjectMgr->GetItemTemplateStore();
+    for (ItemTemplateContainer::const_iterator itr = its->begin(); itr != its->end(); ++itr)
+    {
+        int localeIndex = GetSessionDbLocaleIndex();
+        if (localeIndex >= 0)
+        {
+            uint8 ulocaleIndex = uint8(localeIndex);
+            if (ItemLocale const *il = sObjectMgr->GetItemLocale(itr->second.ItemId))
+            {
+                if (il->Name.size() > ulocaleIndex && !il->Name[ulocaleIndex].empty())
+                {
+                    std::string name = il->Name[ulocaleIndex];
+
+                    if (Utf8FitTo(name, wNamePart))
+                    {
+                        if (maxResults && count++ == maxResults)
+                        {
+                            PSendSysMessage(LANG_COMMAND_LOOKUP_MAX_RESULTS, maxResults);
+                            return true;
+                        }
+
+                        if (GetSession())
+                            PSendSysMessage(LANG_ITEM_LIST_CHAT, itr->second.ItemId, itr->second.ItemId, name.c_str());
+                        else
+                            PSendSysMessage(LANG_ITEM_LIST_CONSOLE, itr->second.ItemId, name.c_str());
+
+                        if (!found)
+                            found = true;
+
+                        continue;
+                    }
+                }
+            }
+        }
+
+		if (itr->second.ItemId < 200000)
+			continue;
+
+        std::string name = itr->second.Name1;
+        if (name.empty())
+            continue;
+
+        if (Utf8FitTo(name, wNamePart))
+        {
+            if (maxResults && count++ == maxResults)
+            {
+                PSendSysMessage(LANG_COMMAND_LOOKUP_MAX_RESULTS, maxResults);
+                return true;
+            }
+
+            if (GetSession())
+                PSendSysMessage(LANG_ITEM_LIST_CHAT, itr->second.ItemId, itr->second.ItemId, name.c_str());
+            else
+                PSendSysMessage(LANG_ITEM_LIST_CONSOLE, itr->second.ItemId, name.c_str());
+
+            if (!found)
+                found = true;
+        }
+    }
+
+    if (!found)
+        SendSysMessage(LANG_COMMAND_NOITEMFOUND);
 
     return true;
 }

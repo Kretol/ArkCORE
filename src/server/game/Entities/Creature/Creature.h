@@ -287,6 +287,8 @@ struct CreatureDataAddon
     uint32 bytes2;
     uint32 emote;
     CreatureDataAddonAura const* auras;          // loaded as char* "spell1 eff1 spell2 eff2 ... "
+    float scale;
+    uint32 faction;
 };
 
 struct CreatureModelInfo
@@ -515,10 +517,10 @@ public:
     {
         if (isTotem() || isTrigger() || GetCreatureType() == CREATURE_TYPE_CRITTER || isSpiritService())
             SetReactState(REACT_PASSIVE);
+        else if (isCivilian())
+            SetReactState(REACT_DEFENSIVE);
         else
             SetReactState(REACT_AGGRESSIVE);
-        /*else if (isCivilian())
-         SetReactState(REACT_DEFENSIVE);*/;
     }
 
     ///// TODO RENAME THIS!!!!!

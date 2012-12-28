@@ -79,7 +79,9 @@ public:
         //{ TODO: fix or remove these commands
         { "name", SEC_GAMEMASTER, false, &HandleNpcSetNameCommand, "", NULL },
         { "subname", SEC_GAMEMASTER, false, &HandleNpcSetSubNameCommand, "", NULL },
-        //}
+        // Custom
+        { "dynflags", SEC_GAMEMASTER, false, &HandleNpcSetDynamicFlagsCommand,   "", NULL },
+        { "unitflags", SEC_GAMEMASTER, false, &HandleNpcSetUnitFlagsCommand,      "", NULL },
         { NULL, 0, false, NULL, "", NULL } };
         static ChatCommand npcCommandTable[] =
         {
@@ -95,6 +97,9 @@ public:
         { "delete", SEC_GAMEMASTER, false, NULL, "", npcDeleteCommandTable },
         { "follow", SEC_GAMEMASTER, false, NULL, "", npcFollowCommandTable },
         { "set", SEC_GAMEMASTER, false, NULL, "", npcSetCommandTable },
+        // Custom
+        { "return", SEC_GAMEMASTER, false, &HandleNpcReturnCommand, "", NULL },
+        { "attack", SEC_GAMEMASTER, false, &HandleNpcAttackCommand, "", NULL },
         { NULL, 0, false, NULL, "", NULL } };
         static ChatCommand commandTable[] =
         {
@@ -124,6 +129,16 @@ public:
         }
 
         uint32 id = atoi(charID);
+
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (id == 21369 || id == 24666 || id == 25554) //21369-Flame strike trigger, 24666-Flame strike trigger, 25554-Flame strike trigger
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
 
         Player *chr = handler->GetSession()->GetPlayer();
         float x = chr->GetPositionX();
@@ -1113,6 +1128,16 @@ public:
         if (!id)
             return false;
 
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (id == 21369 || id == 24666 || id == 25554) //21369-Flame strike trigger, 24666-Flame strike trigger, 25554-Flame strike trigger
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
         chr->SummonCreature(id, *chr, TEMPSUMMON_CORPSE_DESPAWN, 120);
 
         return true;
@@ -1452,6 +1477,180 @@ public:
 
          pCreature->SaveToDB();
          */
+        return true;
+    }
+
+    static bool HandleNpcReturnCommand(ChatHandler* handler, const char* args)
+    {
+        Creature* pCreature = handler->getSelectedCreature();
+        if (!pCreature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        pCreature->AI()->EnterEvadeMode();
+        return true;
+    }
+	
+	static bool HandleNpcSetDynamicFlagsCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 npcDynFlags = (uint32) atoi((char*)args);
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetUInt32Value(UNIT_DYNAMIC_FLAGS, npcDynFlags);
+        creature->SaveToDB();
+        return true;
+    }
+
+    static bool HandleNpcSetUnitFlagsCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 npcUnitFlags = (uint32) atoi((char*)args);
+
+        Creature* creature = handler->getSelectedCreature();
+
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetUInt32Value(UNIT_FIELD_FLAGS, npcUnitFlags);
+        creature->SaveToDB();
+        return true;
+    }
+
+    static bool HandleNpcCustScaleCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        float Scale = (float)atof((char*)args);
+        if (Scale > 10.0f || Scale < 0.0f)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+
+        uint32 lowguid = 0;
+        lowguid = creature->GetDBTableGUIDLow();
+        if (lowguid > 0)
+        {
+            QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+            if (result)
+                WorldDatabase.PExecute("UPDATE creature_addon SET scale = '%f' WHERE guid = '%u'", Scale, lowguid);
+            else
+                WorldDatabase.PExecute("INSERT INTO creature_addon(guid,scale) VALUES ('%u','%f')", lowguid, Scale);
+        }
+        return true;
+    }
+
+    static bool HandleNpcCustFactCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        char* pfactionid = handler->extractKeyFromLink((char*)args, "Hfaction");
+
+        Creature* target = handler->getSelectedCreature();
+        if (!target || target->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!pfactionid)
+        {
+            if (target)
+            {
+                uint32 factionid = target->getFaction();
+                handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid);
+            }
+            return true;
+        }
+
+        uint32 factionid = atoi(pfactionid);
+
+        if (!sFactionTemplateStore.LookupEntry(factionid))
+        {
+            handler->PSendSysMessage(LANG_WRONG_FACTION, factionid);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        handler->PSendSysMessage(LANG_YOU_CHANGE_NPC_CUST_FACTION, target->GetGUIDLow(), factionid);
+
+        target->setFaction(factionid);
+
+        uint32 lowguid = 0;
+        lowguid = target->GetDBTableGUIDLow();
+        if (lowguid > 0)
+        {
+            QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+            if (result)
+                WorldDatabase.PExecute("UPDATE creature_addon SET faction = '%u' WHERE guid = '%u'", factionid, lowguid);
+            else
+                WorldDatabase.PExecute("INSERT INTO creature_addon(guid,faction) VALUES ('%u','%u')", lowguid, factionid);
+        }
+        return true;
+    }
+
+    static bool HandleNpcAttackCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* player = strtok((char*)args, " ");
+        if (!player)
+            return false;
+
+        Player* target = sObjectAccessor->FindPlayerByName(player);
+        if (!target)
+            {
+                handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+
+        creature->getThreatManager().addThreat(target, 1000000000.0f);
+
         return true;
     }
 };

@@ -511,6 +511,14 @@ protected:
     void HandleCharacterDeletedListHelper (DeletedInfoList const& foundList);
     void HandleCharacterDeletedRestoreHelper (DeletedInfo const& delInfo);
 
+    // Custom
+    bool HandleCastPlayerCommand(const char *args);
+    bool HandleCastAllCommand(const char *args);
+    bool HandleCharacterFactionCommand(const char* args);
+    bool HandleCharacterFactionPermCommand(const char* args);
+    bool HandleLookupRPItemCommand(const char * args);
+    bool HandleServerEmoteCommand(const char* args);
+
 private:
     WorldSession * m_session;          // != NULL for chat command call and NULL for CLI command
 

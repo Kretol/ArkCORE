@@ -32,6 +32,8 @@
 #include "ScriptSystem.h"
 #include "Transport.h"
 
+#include "../Scripts/Custom/sc_npc_teleport.h"
+
 // Utility macros to refer to the script registry.
 #define SCR_REG_MAP(T) ScriptRegistry<T>::ScriptMap
 #define SCR_REG_ITR(T) ScriptRegistry<T>::ScriptMapIterator
@@ -157,6 +159,7 @@ void ScriptMgr::Initialize ()
     uint32 oldMSTime = getMSTime();
 
     LoadDatabase();
+    LoadNpcTele(); // Load TeleNPC2
 
     sLog->outString("Loading C++ scripts");
 

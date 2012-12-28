@@ -1409,7 +1409,10 @@ void World::LoadConfigSettings (bool reload)
     m_int_configs[CONFIG_TOL_BARAD_PLR_MIN] = sConfig->GetIntDefault("Tol Barad.PlayerMin", 0);
     m_int_configs[CONFIG_TOL_BARAD_PLR_MIN_LVL] = sConfig->GetIntDefault("Tol Barad.PlayerMinLvl", 80);
     m_int_configs[CONFIG_TOL_BARAD_BATTLETIME] = sConfig->GetIntDefault("Tol Barad.BattleTimer", 30);
-    m_int_configs[CONFIG_TOL_BARAD_NOBATTLETIME] = sConfig->GetIntDefault("Tol Barad.NoBattleTimer", 150);	
+    m_int_configs[CONFIG_TOL_BARAD_NOBATTLETIME] = sConfig->GetIntDefault("Tol Barad.NoBattleTimer", 150);
+
+    // Custom
+    m_float_configs[CONFIG_MAX_AGRO_RANGE] = sConfig->GetFloatDefault("MaxAgroRange", 45.0f);
 
     sScriptMgr->OnConfigLoad(reload);
 }
@@ -3108,6 +3111,112 @@ void World::SendWintergraspState ()
             itr->second->GetPlayer()->SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL) + pvpWG->GetTimer()));
             // Hide unneeded info which in center of screen
             itr->second->GetPlayer()->SendInitWorldStates(itr->second->GetPlayer()->GetZoneId(), itr->second->GetPlayer()->GetAreaId());
+        }
+    }
+}
+
+// Custom
+
+void World::CastAll(uint32 spell, bool triggered)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->CastSpell(target, spell, triggered);
+        }
+    }
+}
+
+void World::AddItemAll(uint32 itemId, int32 count)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+
+            //Subtract
+            if (count < 0)
+            {
+                target->DestroyItemCount(itemId, -count, true, false);
+                break;
+            }
+
+            //Adding items
+            uint32 noSpaceForCount = 0;
+
+            // check space and find places
+            ItemPosCountVec dest;
+            uint8 msg = target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, count, &noSpaceForCount);
+            if (msg != EQUIP_ERR_OK)                               // convert to possible store amount
+                count -= noSpaceForCount;
+
+            if (count == 0 || dest.empty())                         // can't add any
+                break;
+
+            Item* item = target->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+
+            if (count > 0 && item)
+            {
+                target->SendNewItem(item, count, true, false);
+            }
+
+            if (noSpaceForCount > 0)
+                break;
+        }
+    }
+}
+
+void World::MassUnaura(uint32 spellId)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->RemoveAurasDueToSpell(spellId);
+        }
+    }
+}
+
+void World::MassUnauraAll()
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->RemoveAllAuras();
+        }
+    }
+}
+
+void World::MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone, float orient, uint32 phase)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->SetSummonPoint(mapid, x, y, z);
+
+            WorldPacket data(SMSG_SUMMON_REQUEST, 8+4+4);
+            data << uint64(guid);
+            data << uint32(zone);
+            data << uint32(MAX_PLAYER_SUMMON_DELAY*IN_MILLISECONDS);
+            target->GetSession()->SendPacket(&data);
         }
     }
 }

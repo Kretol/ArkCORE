@@ -322,7 +322,11 @@ enum ArkCoreStrings
     // Use for custom patches             11000-11999
     LANG_AUTO_BROADCAST = 11000, LANG_INVALID_REALMID = 11001, LANG_FAILED_NO_PLACE_FOR_PET = 11002,
 
-    LANG_PINFO_MAP_ONLINE = 11100, LANG_PINFO_MAP_OFFLINE = 11101,
+    LANG_PINFO_MAP_ONLINE               = 11100,
+    LANG_PINFO_MAP_OFFLINE              = 11101,
+    LANG_DEV_ON                         = 11102,
+    LANG_DEV_OFF                        = 11103,
+
     LANG_COMMAND_RPITEMIDINVALID        = 11900,
     LANG_REMOVERPITEM                   = 11901,
     LANG_ADDRPITEM                      = 11902,
@@ -354,6 +358,7 @@ enum ArkCoreStrings
     LANG_BAD_SCALE_VALUE_RACE           = 11928,
     LANG_BAD_SCALE_VALUE_LOCKED         = 11929,
     LANG_CUSTOM_SCALE_CREATE            = 11930,
+    LANG_MINIGAME_LOW_LEVEL             = 11931,
 
 // NOT RESERVED IDS                   12000-1999999999
 // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

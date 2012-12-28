@@ -70,6 +70,7 @@ void AddSC_currency_commandscript();
 void AddSC_quest_commandscript ();
 void AddSC_reload_commandscript ();
 void AddSC_credits_commandscript ();
+void AddSC_misc_commandscript ();
 
 #ifdef SCRIPTS
 //world
@@ -780,6 +781,7 @@ void AddCommandScripts ()
     AddSC_currency_commandscript();
     AddSC_quest_commandscript();
     AddSC_reload_commandscript();
+    AddSC_misc_commandscript();
 }
 
 void AddWorldScripts ()
@@ -1448,6 +1450,7 @@ void AddBattlegroundScripts ()
 
 #ifdef SCRIPTS
 /* This is where custom scripts' loading functions should be declared. */
+    void AddSC_npc_teleport();
 
 #endif
 
@@ -1456,6 +1459,7 @@ void AddCustomScripts ()
 #ifdef SCRIPTS
     /* This is where custom scripts should be added. */
 	AddSC_transmogrify_script();
+    AddSC_npc_teleport();
 
 #endif
 }

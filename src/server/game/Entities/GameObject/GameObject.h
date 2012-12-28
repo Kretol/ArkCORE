@@ -311,7 +311,9 @@ struct GameObjectInfo
         //27 GAMEOBJECT_TYPE_MINI_GAME
         struct
         {
-            uint32 gameType;                                //0
+            uint32 areaTrigger;                             //0
+            uint32 requiredLevel;                           //1
+            uint32 phase;                                   //2
         } miniGame;
         //29 GAMEOBJECT_TYPE_CAPTURE_POINT
         struct
@@ -640,6 +642,7 @@ struct GameObjectData
     GOState go_state;
     uint8 spawnMask;
     uint8 artKit;
+    float scale;
     bool dbData;
 };
 
@@ -668,7 +671,7 @@ public:
     void RemoveFromWorld ();
     void CleanupsBeforeDelete (bool finalCleanup = true);
 
-    bool Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit = 0);
+    bool Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit = 0, float scale = 0);
     void Update (uint32 p_time);
     static GameObject* GetGameObject (WorldObject& object, uint64 guid);
     GameObjectInfo const* GetGOInfo () const
@@ -686,6 +689,7 @@ public:
 
     bool IsTransport () const;
     bool IsDynTransport () const;
+    bool IsStaticMO() const;
 
     uint32 GetDBTableGUIDLow () const
     {
@@ -719,7 +723,7 @@ public:
     const char* GetNameForLocaleIdx (LocaleConstant locale_idx) const;
 
     void SaveToDB ();
-    void SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask);
+    void SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask, float scale = 0);
     bool LoadFromDB (uint32 guid, Map *map);
     void DeleteFromDB ();
 

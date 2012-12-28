@@ -1480,6 +1480,7 @@ bool Creature::canStartAttack (Unit const* who, bool force) const
 float Creature::GetAttackDistance (Unit const* pl) const
 {
     float aggroRate = sWorld->getRate(RATE_CREATURE_AGGRO);
+    float maxAggroRange = sWorld->getFloatConfig(CONFIG_MAX_AGRO_RANGE);
     if (aggroRate == 0)
         return 0.0f;
 
@@ -1512,6 +1513,10 @@ float Creature::GetAttackDistance (Unit const* pl) const
     if (RetDistance < 5)
         if (!(pl->isCamouflaged()))
             RetDistance = 5;
+
+    // "If aggro radius config is lower than returned value, set to config value"
+    if (maxAggroRange < RetDistance)
+        RetDistance = maxAggroRange;
 
     return (RetDistance * aggroRate);
 }
@@ -2146,6 +2151,13 @@ bool Creature::LoadCreaturesAddon (bool reload)
             sLog->outDebug(LOG_FILTER_TSCR, "Spell: %u with AuraEffectMask %u added to creature (GUID: %u Entry: %u)", cAura->spell_id, cAura->effectMask, GetGUIDLow(), GetEntry());
         }
     }
+
+    if (cainfo->scale != 0)
+        SetFloatValue(OBJECT_FIELD_SCALE_X, cainfo->scale);
+
+    if (cainfo->faction > 2)
+        setFaction(cainfo->faction);
+
     return true;
 }
 

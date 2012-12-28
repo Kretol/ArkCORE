@@ -123,6 +123,9 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "dist", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleCastDistCommand>, "", NULL },
     { "self", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleCastSelfCommand>, "", NULL },
     { "target", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleCastTargetCommand>, "", NULL },
+    // Custom
+    { "player", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleCastPlayerCommand>, "", NULL },
+    { "all", SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleCastAllCommand>, "", NULL },
     { "", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleCastCommand>, "", NULL },
     { NULL, 0, false, NULL, "", NULL } };
 
@@ -145,6 +148,9 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "rename", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleCharacterRenameCommand>, "", NULL },
     { "reputation", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleCharacterReputationCommand>, "", NULL },
     { "titles", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleCharacterTitlesCommand>, "", NULL },
+    // Custom
+    { "faction", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleCharacterFactionCommand>, "", NULL },
+    { "factionperm", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleCharacterFactionPermCommand>, "", NULL },
     { NULL, 0, false, NULL, "", NULL } };
 
     static ChatCommand channelSetCommandTable[] =
@@ -262,6 +268,8 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "title", SEC_GAMEMASTER, true, OldHandler<&ChatHandler::HandleLookupTitleCommand>, "", NULL },
     { "map", SEC_ADMINISTRATOR, true, OldHandler<&ChatHandler::HandleLookupMapCommand>, "", NULL },
     { "npc", SEC_ADMINISTRATOR, true, OldHandler<&ChatHandler::HandleLookupCreatureCommand>, "", NULL },
+    //Custom
+    { "rpitem", SEC_PLAYER, true, OldHandler<&ChatHandler::HandleLookupRPItemCommand>, "", NULL },
     { NULL, 0, false, NULL, "", NULL } };
 
     static ChatCommand modifyCommandTable[] =
@@ -378,6 +386,8 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "shutdown", SEC_ADMINISTRATOR, true, NULL, "", serverShutdownCommandTable },
     { "set", SEC_ADMINISTRATOR, true, NULL, "", serverSetCommandTable },
     { "togglequerylog", SEC_CONSOLE, true, OldHandler<&ChatHandler::HandleServerToggleQueryLogging>, "", NULL },
+    // Custom
+    { "emote", SEC_MODERATOR, true, OldHandler<&ChatHandler::HandleServerEmoteCommand>, "", NULL },
     { NULL, 0, false, NULL, "", NULL } };
 
     static ChatCommand teleCommandTable[] =
@@ -407,8 +417,8 @@ ChatCommand * ChatHandler::getCommandTable ()
     {
     { "list", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketListCommand>, "", NULL },
     { "onlinelist", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketListOnlineCommand>, "", NULL },
-    { "viewname", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketGetByNameCommand>, "", NULL },
     { "viewid", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketGetByIdCommand>, "", NULL },
+    { "viewname", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketGetByNameCommand>, "", NULL },
     { "close", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketCloseByIdCommand>, "", NULL },
     { "closedlist", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMTicketListClosedCommand>, "", NULL },
     { "escalatedlist", SEC_GAMEMASTER, false, OldHandler<&ChatHandler::HandleGMTicketListEscalatedCommand>, "", NULL },
@@ -461,7 +471,7 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "aura", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleAuraCommand>, "", NULL },
     { "unaura", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleUnAuraCommand>, "", NULL },
     { "nameannounce", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleNameAnnounceCommand>, "", NULL },
-    { "gmnameannounce", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMNameAnnounceCommand>, "", NULL },
+    { "gmchat", SEC_MODERATOR, false, OldHandler<&ChatHandler::HandleGMNameAnnounceCommand>, "", NULL },
     { "announce", SEC_MODERATOR, true, OldHandler<&ChatHandler::HandleAnnounceCommand>, "", NULL },
     { "gmannounce", SEC_MODERATOR, true, OldHandler<&ChatHandler::HandleGMAnnounceCommand>, "", NULL },
     { "notify", SEC_MODERATOR, true, OldHandler<&ChatHandler::HandleNotifyCommand>, "", NULL },
@@ -534,6 +544,9 @@ ChatCommand * ChatHandler::getCommandTable ()
     { "unbindsight", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleUnbindSightCommand>, "", NULL },
     { "wg", SEC_ADMINISTRATOR, false, NULL, "", wintergraspCommandTable },
     { "playall", SEC_GAMEMASTER, false, OldHandler<&ChatHandler::HandlePlayAllCommand>, "", NULL },
+
+    // Custom
+
     { NULL, 0, false, NULL, "", NULL } };
 
     // cache for commands, needed because some commands are loaded dynamically through ScriptMgr

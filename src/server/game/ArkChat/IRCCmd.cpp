@@ -218,7 +218,7 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
             }
             cValid = true;
         }
-        else if(CDATA.CMD == "INFO")
+        /*else if(CDATA.CMD == "INFO")
         {
             switch(ParamsValid(&CDATA, 0, sIRC.CINFO))
             {
@@ -233,7 +233,7 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
                     break;
             }
             cValid = true;
-        }
+        }*/
         else if(CDATA.CMD == "WG")
         {
             switch(ParamsValid(&CDATA, 0, sIRC.CINFO))
