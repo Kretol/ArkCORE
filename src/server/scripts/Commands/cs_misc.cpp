@@ -212,6 +212,7 @@ public:
         }
 
         uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
+        Player *chr = handler->GetSession()->GetPlayer();
         if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
         {
             handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
@@ -220,7 +221,7 @@ public:
 
         uint8 chrLevel = handler->GetSession()->GetPlayer()->getLevel();
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", chr->GetGUIDLow());
         if(result)
         {
             Field* fields = result->Fetch();
@@ -232,7 +233,7 @@ public:
             if (scaleTimesChanged < 10)
             {
                 //if ((scaleUnlocked == 0 && Scale > 1.1f) || (scaleUnlocked == 0 && Scale < 0.9f))
-                if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+                if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
@@ -262,7 +263,7 @@ public:
         else
 	    {
             //if ((Scale > 1.1f) || (Scale < 0.9f))
-            if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+            if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);

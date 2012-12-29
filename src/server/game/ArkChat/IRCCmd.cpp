@@ -218,12 +218,12 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
             }
             cValid = true;
         }
-        /*else if(CDATA.CMD == "INFO")
+        else if(CDATA.CMD == "INFO")
         {
             switch(ParamsValid(&CDATA, 0, sIRC.CINFO))
             {
                 case E_OK:
-                    Info_Server(&CDATA);
+                    //Info_Server(&CDATA);  //(Causing crash)
                     break;
                 case E_SIZE:
                     sIRC.Send_IRC_Channel(USER, "\0034[ERROR] : Syntax Error! ( "+sIRC._cmd_prefx+"info )", true, "ERROR");
@@ -233,7 +233,7 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
                     break;
             }
             cValid = true;
-        }*/
+        }
         else if(CDATA.CMD == "WG")
         {
             switch(ParamsValid(&CDATA, 0, sIRC.CINFO))

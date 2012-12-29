@@ -5865,7 +5865,7 @@ void ObjectMgr::LoadQuestAreaTriggers()
         if (!atEntry)
         {
             sLog->outErrorDb("Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", trigger_ID);
-            //continue;
+            continue;
         }
 
         Quest const* quest = GetQuestTemplate(quest_ID);
