@@ -230,6 +230,7 @@ bool GameObject::Create (uint32 guidlow, uint32 name_id, Map *map, uint32 phaseM
 
     UpdateRotationFields(rotation2, rotation3);          // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
+    GameObjectData const* data = sObjectMgr->GetGOData(guidlow);
     if (scale > 0)
         SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
     else
@@ -733,6 +734,7 @@ void GameObject::SaveToDB (uint32 mapid, uint8 spawnMask, uint32 phaseMask, floa
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
+    data.scale = scale;
 
     // updated in DB
     std::ostringstream ss;
