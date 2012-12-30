@@ -525,6 +525,6 @@ private:
     uint32 m_paidMoney;
     uint32 m_paidExtendedCost;
     AllowedLooterSet allowedGUIDs;
-	uint32 m_fakeDisplayEntry;	
+    uint32 m_fakeDisplayEntry;	
 };
 #endif
