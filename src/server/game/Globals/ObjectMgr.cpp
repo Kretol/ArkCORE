@@ -2624,7 +2624,7 @@ uint32 ObjectMgr::GetFakeItemEntry(uint32 itemGuid)
     return 0;
 }
 
-void ObjectMgr::SetFekeItem(uint32 itemGuid, uint32 fakeEntry)
+void ObjectMgr::SetFakeItem(uint32 itemGuid, uint32 fakeEntry)
 {
     _fakeItemsStore[itemGuid] = fakeEntry;
 }
