@@ -61,10 +61,9 @@ public:
         { "near", SEC_GAMEMASTER, false, &HandleGameObjectNearCommand, "", NULL },
         { "target", SEC_GAMEMASTER, false, &HandleGameObjectTargetCommand, "", NULL },
         { "turn", SEC_GAMEMASTER, false, &HandleGameObjectTurnCommand, "", NULL },
+        { "scale", SEC_GAMEMASTER, false, &HandleGameObjectScaleCommand, "", NULL },
         { "add", SEC_GAMEMASTER, false, NULL, "", gobjectAddCommandTable },
         { "set", SEC_GAMEMASTER, false, NULL, "", gobjectSetCommandTable },
-        // Custom
-        { "scale", SEC_GAMEMASTER, false, &HandleGameObjectScaleCommand, "", NULL },
         { NULL, 0, false, NULL, "", NULL } };
         static ChatCommand commandTable[] =
         {
