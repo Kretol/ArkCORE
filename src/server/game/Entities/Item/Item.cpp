@@ -1385,14 +1385,17 @@ FakeResult Item::SetFakeDisplay(uint32 iEntry)
     if (!otherTmpl)
         return FAKE_ERR_CANT_FIND_ITEM;
 
+    // Inventory slot must match
     if (myTmpl->InventoryType != otherTmpl->InventoryType)
         return FAKE_ERR_DIFF_INVENTORYTYPE;
     
+    // Valid classes are weapons and armor
+    if (((myTmpl->Class != 2) && (myTmpl->Class != 4)) || ((otherTmpl->Class != 2) && (otherTmpl->Class != 4)))
+        return FAKE_ERR_INVALID_CLASS;
+
+    // Subclasses should match (eg, no axe->mace)
     if (myTmpl->SubClass != otherTmpl->SubClass)
         return FAKE_ERR_DIFF_SUBCLASS;
-    
-    if ((myTmpl->Class != 2) && (myTmpl->Class != 4) || (otherTmpl->Class != 2) && (otherTmpl->Class != 4))
-        return FAKE_ERR_INVALID_CLASS;
 
     if (m_fakeDisplayEntry != iEntry)
     {

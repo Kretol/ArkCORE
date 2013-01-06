@@ -80,7 +80,7 @@ class npc_transmogrify : public CreatureScript
                     break;
 
                 case FAKE_ERR_WRONG_QUALITY:
-                    handler.PSendSysMessage("The item is of incorrect quality!");
+                    handler.PSendSysMessage(LANG_FAKEITEM_INVALID_QUALITY);
                     break;
 
                 case FAKE_ERR_DIFF_INVENTORYTYPE:
@@ -88,11 +88,19 @@ class npc_transmogrify : public CreatureScript
                     break;
 
                 case FAKE_ERR_DIFF_CLASS:
-                    handler.PSendSysMessage("Item is for a different class!");
+                    handler.PSendSysMessage(LANG_FAKEITEM_DIFF_CLASS);
                     break;
 
                 case FAKE_ERR_DIFF_RACE:
-                    handler.PSendSysMessage("Item is for a different race!");
+                    handler.PSendSysMessage(LANG_FAKEITEM_DIFF_RACE);
+                    break;
+
+                case FAKE_ERR_INVALID_CLASS:
+                    handler.PSendSysMessage(LANG_FAKEITEM_INVALID_TYPE);
+                    break;
+
+                case FAKE_ERR_DIFF_SUBCLASS:
+                    handler.PSendSysMessage(LANG_FAKEITEM_DIFF_TYPE);
                     break;
 
                 case FAKE_ERR_DIFF_SUBCLASS:
